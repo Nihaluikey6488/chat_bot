@@ -1,0 +1,48 @@
+import { UserModel } from "./models/user.model.js";
+
+class UserDao {
+  async createUser(input: { name: string; email: string; passwordHash: string }) {
+    const user = await UserModel.create(input);
+    return user;
+  }
+
+  async findByEmail(email: string) {
+    return UserModel.findOne({ email: email.toLowerCase() });
+  }
+
+  async findById(userId: string) {
+    return UserModel.findById(userId);
+  }
+
+  async setResetToken(userId: string, tokenHash: string, expiresAt: Date) {
+    return UserModel.findByIdAndUpdate(
+      userId,
+      {
+        resetPasswordTokenHash: tokenHash,
+        resetPasswordExpiresAt: expiresAt
+      },
+      { new: true }
+    );
+  }
+
+  async findByValidResetToken(tokenHash: string) {
+    return UserModel.findOne({
+      resetPasswordTokenHash: tokenHash,
+      resetPasswordExpiresAt: { $gt: new Date() }
+    });
+  }
+
+  async updatePassword(userId: string, passwordHash: string) {
+    return UserModel.findByIdAndUpdate(
+      userId,
+      {
+        passwordHash,
+        resetPasswordTokenHash: null,
+        resetPasswordExpiresAt: null
+      },
+      { new: true }
+    );
+  }
+}
+
+export const userDao = new UserDao();
